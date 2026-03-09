@@ -1,0 +1,6 @@
+#ifndef SRC_PLATFORM_LAB1_GPIO_LAB1_GPIO_H_
+#define SRC_PLATFORM_LAB1_GPIO_LAB1_GPIO_H_
+
+void plt_gpio_toggle(void);
+
+#endif /* SRC_PLATFORM_LAB1_GPIO_LAB1_GPIO_H_ */

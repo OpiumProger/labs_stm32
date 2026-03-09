@@ -1,0 +1,24 @@
+/* Директива препроцессора для подключения заголовочного файла */
+#include "platform.h"
+
+//#include "lab1_gpio.h"
+//#include "lab2_timer.h"
+//#include "lab3_stepper.h"
+
+
+/* Однократный вызов */
+int plt_init(void)
+{
+
+	return 0;
+}
+
+
+/* Повторяющийся вызов */
+void plt_process(void)
+{
+
+	/* Устанавливаем задержку */
+	plt_delay(50);
+}
+
