@@ -16,6 +16,12 @@
 #define STP3_Pin	GPIO_PIN_0
 #define STP4_Pin	GPIO_PIN_0
 
+/**
+ * @brief выполняет переключение обмоток в рамках одного шага ШД
+ *
+ * @param step_n - номер шага
+ * @return void
+ */
 void plt_stepper_full(uint8_t step_n)
 {
 	switch (step_n) {
@@ -59,11 +65,25 @@ void plt_stepper_full(uint8_t step_n)
 
 }
 
-void plt_stepper_half(uint8_t step_n)
+
+/**
+ * @brief выполняет переключение обмоток в рамках одного полу-шага ШД
+ *
+ * @param half_step_n - номер полу-шага
+ * @return return
+ */
+void plt_stepper_half(uint8_t half_step_n)
 {
 
 }
 
+/**
+ * @brief вращает шаговый двигатель в заданном направлении
+ *
+ * @param dir - направление вращения, <-1> - против часовой стрелки, <1> - по часовой стрелке
+ * <0> - двигатель остановлен
+ * @return return
+ */
 void plt_stepper(int dir)
 {
 	/* */
