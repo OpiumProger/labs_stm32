@@ -78,9 +78,9 @@ git push origin lab1-surname
 Перед началом новой работы обновите локальную копию:
 
 ```bash
-git checkout main
-git pull upstream main
-git push origin main
+git checkout master
+git pull upstream master
+git push origin master
 ```
 
 ---
