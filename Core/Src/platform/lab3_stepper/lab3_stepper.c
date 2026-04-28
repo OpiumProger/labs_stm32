@@ -74,7 +74,62 @@ void plt_stepper_full(uint8_t step_n)
  */
 void plt_stepper_half(uint8_t half_step_n)
 {
-
+	switch (half_step_n) {
+		case 0:  // Такт 1
+			HAL_GPIO_WritePin(STP1_GPIO_Port, STP1_Pin, GPIO_PIN_SET);
+			HAL_GPIO_WritePin(STP2_GPIO_Port, STP2_Pin, GPIO_PIN_RESET);
+			HAL_GPIO_WritePin(STP3_GPIO_Port, STP3_Pin, GPIO_PIN_RESET);
+			HAL_GPIO_WritePin(STP4_GPIO_Port, STP4_Pin, GPIO_PIN_RESET);
+			break;
+		case 1:  // Такт 2
+			HAL_GPIO_WritePin(STP1_GPIO_Port, STP1_Pin, GPIO_PIN_SET);
+			HAL_GPIO_WritePin(STP2_GPIO_Port, STP2_Pin, GPIO_PIN_RESET);
+			HAL_GPIO_WritePin(STP3_GPIO_Port, STP3_Pin, GPIO_PIN_SET);
+			HAL_GPIO_WritePin(STP4_GPIO_Port, STP4_Pin, GPIO_PIN_RESET);
+			break;
+		case 2:  // Такт 3
+			HAL_GPIO_WritePin(STP1_GPIO_Port, STP1_Pin, GPIO_PIN_RESET);
+			HAL_GPIO_WritePin(STP2_GPIO_Port, STP2_Pin, GPIO_PIN_RESET);
+			HAL_GPIO_WritePin(STP3_GPIO_Port, STP3_Pin, GPIO_PIN_SET);
+			HAL_GPIO_WritePin(STP4_GPIO_Port, STP4_Pin, GPIO_PIN_RESET);
+			break;
+		case 3:  // Такт 4
+			HAL_GPIO_WritePin(STP1_GPIO_Port, STP1_Pin, GPIO_PIN_RESET);
+			HAL_GPIO_WritePin(STP2_GPIO_Port, STP2_Pin, GPIO_PIN_SET);
+			HAL_GPIO_WritePin(STP3_GPIO_Port, STP3_Pin, GPIO_PIN_SET);
+			HAL_GPIO_WritePin(STP4_GPIO_Port, STP4_Pin, GPIO_PIN_RESET);
+			break;
+		case 4:  // Такт 5
+			HAL_GPIO_WritePin(STP1_GPIO_Port, STP1_Pin, GPIO_PIN_RESET);
+			HAL_GPIO_WritePin(STP2_GPIO_Port, STP2_Pin, GPIO_PIN_SET);
+			HAL_GPIO_WritePin(STP3_GPIO_Port, STP3_Pin, GPIO_PIN_RESET);
+			HAL_GPIO_WritePin(STP4_GPIO_Port, STP4_Pin, GPIO_PIN_RESET);
+			break;
+		case 5:  // Такт 6
+			HAL_GPIO_WritePin(STP1_GPIO_Port, STP1_Pin, GPIO_PIN_RESET);
+			HAL_GPIO_WritePin(STP2_GPIO_Port, STP2_Pin, GPIO_PIN_SET);
+			HAL_GPIO_WritePin(STP3_GPIO_Port, STP3_Pin, GPIO_PIN_RESET);
+			HAL_GPIO_WritePin(STP4_GPIO_Port, STP4_Pin, GPIO_PIN_SET);
+			break;
+		case 6:  // Такт 7
+			HAL_GPIO_WritePin(STP1_GPIO_Port, STP1_Pin, GPIO_PIN_RESET);
+			HAL_GPIO_WritePin(STP2_GPIO_Port, STP2_Pin, GPIO_PIN_RESET);
+			HAL_GPIO_WritePin(STP3_GPIO_Port, STP3_Pin, GPIO_PIN_RESET);
+			HAL_GPIO_WritePin(STP4_GPIO_Port, STP4_Pin, GPIO_PIN_SET);
+			break;
+		case 7:  // Такт 8
+			HAL_GPIO_WritePin(STP1_GPIO_Port, STP1_Pin, GPIO_PIN_SET);
+			HAL_GPIO_WritePin(STP2_GPIO_Port, STP2_Pin, GPIO_PIN_RESET);
+			HAL_GPIO_WritePin(STP3_GPIO_Port, STP3_Pin, GPIO_PIN_RESET);
+			HAL_GPIO_WritePin(STP4_GPIO_Port, STP4_Pin, GPIO_PIN_SET);
+			break;
+		default:
+			HAL_GPIO_WritePin(STP1_GPIO_Port, STP1_Pin, GPIO_PIN_RESET);
+			HAL_GPIO_WritePin(STP2_GPIO_Port, STP2_Pin, GPIO_PIN_RESET);
+			HAL_GPIO_WritePin(STP3_GPIO_Port, STP3_Pin, GPIO_PIN_RESET);
+			HAL_GPIO_WritePin(STP4_GPIO_Port, STP4_Pin, GPIO_PIN_RESET);
+			break;
+	}
 }
 
 /**
@@ -84,16 +139,31 @@ void plt_stepper_half(uint8_t half_step_n)
  * <0> - двигатель остановлен
  * @return return
  */
+/**
+ * @brief вращает шаговый двигатель в заданном направлении
+ *
+ * @param dir - направление вращения, <-1> - против часовой стрелки, <1> - по часовой стрелке
+ * <0> - двигатель остановлен
+ * @return void
+ */
 void plt_stepper(int dir)
 {
-	/* */
-//	static int step_n = 0;
-//	switch (step_n) {
-//		case value:
-//
-//			break;
-//		default:
-//			break;
-//	}
+    int half_step_n = 0;  // текущий номер полу-шага (0-7)
 
+    if (dir == 0) {
+        // Двигатель остановлен - ничего не делаем
+        return;
+    }
+
+    // Изменяем номер полу-шага в зависимости от направления
+    half_step_n += dir;
+
+    if (half_step_n >= 8) {
+        half_step_n = 0;  // сброс на 0
+    } else if (half_step_n < 0) {
+        half_step_n = 7;  // перескок на 7
+    }
+
+    plt_stepper_half(half_step_n);
+    plt_delay(15);
 }
