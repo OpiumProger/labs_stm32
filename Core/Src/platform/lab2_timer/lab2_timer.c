@@ -19,14 +19,14 @@ extern TIM_HandleTypeDef htim6;
 
 void plt_timer_set(uint32_t period)
 {
-	HTIM.Instance->ARR = period;
+ HTIM.Instance->ARR = period;
 }
 
 int plt_timer_start_irq(void)
 {
-	/* Запуск TIM6 в режиме прерывания */
-	if(HAL_TIM_Base_Start_IT(&HTIM) == 0) return PLT_OK;
-	else return PLT_ERROR;
+ /* Запуск TIM6 в режиме прерывания */
+ if(HAL_TIM_Base_Start_IT(&HTIM) == 0) return PLT_OK;
+ else return PLT_ERROR;
 }
 
 /* т.н. слабая функция
