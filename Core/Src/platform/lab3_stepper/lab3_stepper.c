@@ -6,15 +6,15 @@
  * необходимый для работы с периферией МК stm32 */
 #include "main.h"
 
-#define STP1_GPIO_Port	GPIOA
-#define STP2_GPIO_Port	GPIOA
-#define STP3_GPIO_Port	GPIOA
-#define STP4_GPIO_Port	GPIOA
+#define STP1_GPIO_Port	SM1_GPIO_Port
+#define STP2_GPIO_Port	SM2_GPIO_Port
+#define STP3_GPIO_Port	SM3_GPIO_Port
+#define STP4_GPIO_Port	SM4_GPIO_Port
 
-#define STP1_Pin	GPIO_PIN_0
-#define STP2_Pin	GPIO_PIN_0
-#define STP3_Pin	GPIO_PIN_0
-#define STP4_Pin	GPIO_PIN_0
+#define STP1_Pin	SM1_Pin
+#define STP2_Pin	SM2_Pin
+#define STP3_Pin	SM3_Pin
+#define STP4_Pin	SM4_Pin
 
 /**
  * @brief выполняет переключение обмоток в рамках одного шага ШД
