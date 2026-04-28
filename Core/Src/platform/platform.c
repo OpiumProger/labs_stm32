@@ -1,43 +1,55 @@
 /* Директива препроцессора для подключения заголовочного файла */
 #include "platform.h"
+
 #include "main.h"
 #include "lab1_gpio/lab1_gpio.h"
 #include "lab2_timer/lab2_timer.h"
 #include "lab3_stepper/lab3_stepper.h"
 #include "lab4_adc/lab4_adc.h"
+#include "platform_def.h"  // правильный путь
+
 extern UART_HandleTypeDef huart1;
+
 /* Однократный вызов */
 int plt_init(void)
 {
-
-  return 0;
+    return 0;
 }
 
+int direction = 1;
+int step_counter = 0;
+int steps_per_rotation = 8;
 
 /* Повторяющийся вызов */
 void plt_process(void)
 {
-  static int direction = 1;
-  static uint32_t last_step_time = 0;
-  static int step_count = 0;
+    uint32_t adc_value;
+    float voltage;
 
-    uint32_t current_time = HAL_GetTick();
+    // Запуск АЦП
+    plt_adc_start();
 
-    if (current_time - last_step_time >= 5) {
-        plt_stepper(direction);
-        last_step_time = current_time;
-        step_count++;
+    // Ожидание преобразования
+    if (plt_adc_conversion_poll() == PLT_OK)
+    {
+        // Получение значения
+        adc_value = plt_adc_get_value();
+        voltage = plt_adc_get_voltage();
 
-        if (step_count >= 200) {
-            direction = -direction;
-            step_count = 0;
+        // Задание 1: проверка порога 3000
+        if (adc_value > 3000)
+        {
+            HAL_GPIO_WritePin(GPIOA, GPIO_PIN_5, GPIO_PIN_SET);  // замени на свой LED пин
+        }
+        else
+        {
+            HAL_GPIO_WritePin(GPIOA, GPIO_PIN_5, GPIO_PIN_RESET);
         }
     }
-//  static int half_step_n = 0;
-//  if(half_step_n>8){
-//    half_step_n = 1;
-//  }
-//  plt_stepper_half(half_step_n);
-//  plt_delay(5);
-//  half_step_n++;
+
+    // Останов АЦП
+    plt_adc_stop();
+
+    // Задержка
+    HAL_Delay(100);
 }
