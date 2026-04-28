@@ -17,13 +17,13 @@ int plt_init(void)
 /* Повторяющийся вызов */
 void plt_process(void)
 {
-    int direction = 1;
-    uint32_t last_step_time = 0;
-    int step_count = 0;
+	static int direction = 1;
+	static uint32_t last_step_time = 0;
+	static int step_count = 0;
 
     uint32_t current_time = HAL_GetTick();
 
-    if (current_time - last_step_time >= 50) {
+    if (current_time - last_step_time >= 5) {
         plt_stepper(direction);
         last_step_time = current_time;
         step_count++;
@@ -33,5 +33,12 @@ void plt_process(void)
             step_count = 0;
         }
     }
+//	static int half_step_n = 0;
+//	if(half_step_n>8){
+//		half_step_n = 1;
+//	}
+//	plt_stepper_half(half_step_n);
+//	plt_delay(5);
+//	half_step_n++;
 }
 
