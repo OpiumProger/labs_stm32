@@ -1,11 +1,20 @@
 /* Директива препроцессора для подключения заголовочного файла */
 #include "platform.h"
+<<<<<<< HEAD
 
 #include "lab1_gpio/lab1_gpio.h"
 #include "lab2_timer/lab2_timer.h"
 #include "lab3_stepper/lab3_stepper.h"
 
 
+=======
+#include "main.h"
+//#include "lab1_gpio/lab1_gpio.h"
+//#include "lab2_timer/lab2_timer.h"
+//#include "lab3_stepper/lab3_stepper.h"
+#include "lab4_adc/lab4_adc.h"
+extern UART_HandleTypeDef huart1;
+>>>>>>> 9fecccfead0d930080b2cc10518e154e29545a24
 /* Однократный вызов */
 int plt_init(void)
 {
@@ -19,8 +28,14 @@ int steps_per_rotation = 8;
 /* Повторяющийся вызов */
 void plt_process(void)
 {
+<<<<<<< HEAD
 
     plt_stepper(direction);
+=======
+	/* Устанавливаем задержку */
+	plt_delay(500);
+}
+>>>>>>> 9fecccfead0d930080b2cc10518e154e29545a24
 
     step_counter++;
     plt_delay(15);
