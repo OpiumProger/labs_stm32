@@ -1,114 +1,107 @@
-/* Директива препроцессора для подключения заголовочного файла */
-
 #include "lab5_usart.h"
-#include "platform.h"
-#include "stm32f1xx_hal.h"
+#include "main.h"
+#include <string.h>
+#include <stdarg.h>
+#include <stdio.h>
 
-static volatile uint8_t uart_rx_flag = 0;
-static uint8_t rx_byte = 0;
-
-// Счётчик обработанных команд – приватная глобальная static‑переменная
-static uint32_t command_counter = 0;
-
-// Внешний хендл UART (обычно объявлен в main.c)
 extern UART_HandleTypeDef huart1;
+extern ADC_HandleTypeDef  hadc1;
 
-/* ----------------------------------------------------------------
-   Вспомогательная функция send_response
-   (демонстрирует локальную static‑переменную)
-   ---------------------------------------------------------------- */
-static void send_response(uint8_t code, const char *msg)
+/* Случай №2: глобальные static — видны только в этом файле */
+static char tx_buf[256];
+static char rx_byte  = 0;
+volatile int uart_rx_flag = 0;
+
+/* ── Инициализация ──────────────────────────────────────────── */
+void plt_uart_init(void)
 {
+    plt_uart_send("\r\n=== ADC MONITOR ===\r\n");
+    plt_uart_send("Commands:\r\n");
+    plt_uart_send("  r -> Read ADC value\r\n");
+    plt_uart_send("  s -> System status\r\n");
+    plt_uart_send("===================\r\n");
+    plt_uart_send("Waiting command: ");
 
-    static uint32_t response_count = 0;
-    response_count++;
-
-    // Отправляем префикс с кодом
-    plt_uart_send("\n[CODE: ");
-    if (code == 0)
-        plt_uart_send("0");
-    else
-        plt_uart_send("1");
-
-    // Отправляем сообщение и информацию о счётчике ответов (для демонстрации static)
-    plt_uart_send("] ");
-    plt_uart_send(msg);
-    plt_uart_send(" (response #");
-    char buf[12];
-    sprintf(buf, "%lu", response_count);
-    plt_uart_send(buf);
-    plt_uart_send(")\nWaiting input: ");
+    HAL_UART_Receive_IT(&huart1, (uint8_t*)&rx_byte, 1);
 }
 
-/* ================================================================
-   Инициализация USART (не содержит static, но может быть вызвана
-   лишь один раз при старте программы)
-   ================================================================ */
-void USART_Init(uint32_t baudrate)
+/* ── Отправка строки ────────────────────────────────────────── */
+void plt_uart_send(const char *data)
 {
-    // В реальном коде здесь настройка HAL, сейчас заглушка
-    // HAL_UART_Init(&huart1); ...
+    HAL_UART_Transmit(&huart1, (uint8_t*)data, strlen(data), HAL_MAX_DELAY);
 }
 
-/* ================================================================
-   Основной цикл опроса (вызывается из main или plt_process)
-   Здесь с помощью static реализован КОНЕЧНЫЙ АВТОМАТ
-   ================================================================ */
-void USART_Process(void)
+/* ── Форматированный вывод ──────────────────────────────────── */
+void plt_uart_print(const char *format, ...)
 {
-    // Локальная static‑переменная для конечного автомата обработки команд
-    static enum {
-        STATE_IDLE,
-        STATE_WAIT_COMMAND
-    } fsm_state = STATE_IDLE;
+    va_list args;
+    va_start(args, format);
+    vsnprintf(tx_buf, sizeof(tx_buf), format, args);
+    va_end(args);
+    plt_uart_send(tx_buf);
+}
 
-    // Проверяем, доступен ли принятый байт
-    if (plt_uart_is_available()) {
-        uart_rx_flag = 0;               // сбрасываем флаг
-        plt_uart_send(&rx_byte);        // эхо только что принятого символа
+/* ── Флаг приёма ────────────────────────────────────────────── */
+int plt_uart_is_available(void)
+{
+    return uart_rx_flag;
+}
 
-        switch (fsm_state) {
-            case STATE_IDLE:
-                // Игнорируем всё, пока не начнём активный приём
-                if (rx_byte != '\r' && rx_byte != '\n') {
-                    fsm_state = STATE_WAIT_COMMAND;
-                }
-                break;
+/* ── Считать АЦП ────────────────────────────────────────────── */
+static uint32_t read_adc(void)
+{
+    /* Случай №1: локальная static — счётчик сохраняется между вызовами */
+    static int step_n = 0;
+    step_n++;
 
-            case STATE_WAIT_COMMAND:
-                if (rx_byte == '1') {
-                    HAL_GPIO_WritePin(USER_LED_GPIO_Port, USER_LED_Pin, GPIO_PIN_SET);
-                    send_response(0, "LED ON");
-                    fsm_state = STATE_IDLE;
-                    command_counter++;
-                } else if (rx_byte == '0') {
-                    HAL_GPIO_WritePin(USER_LED_GPIO_Port, USER_LED_Pin, GPIO_PIN_RESET);
-                    send_response(0, "LED OFF");
-                    fsm_state = STATE_IDLE;
-                    command_counter++;
-                } else {
-                    if (rx_byte != '\r' && rx_byte != '\n') {
-                        send_response(1, "Use only 1 or 0");
-                        fsm_state = STATE_IDLE;
-                    }
-                }
-                break;
-        }
+    HAL_ADC_Start(&hadc1);
+    HAL_ADC_PollForConversion(&hadc1, HAL_MAX_DELAY);
+    uint32_t val = HAL_ADC_GetValue(&hadc1);
+    HAL_ADC_Stop(&hadc1);
 
-        // Перезапускаем прерывание для приёма следующего байта
-        HAL_UART_Receive_IT(&huart1, (uint8_t*)&rx_byte, 1);
+    plt_uart_print("\r\n[ADC] Read #%d  raw=%lu  voltage=%lu mV\r\n",
+                   step_n, val, (val * 3300) / 4095);
+    return val;
+}
+
+/* ── Обработка команды ──────────────────────────────────────── */
+void plt_uart_process(void)
+{
+    if (!plt_uart_is_available()) return;
+
+    uart_rx_flag = 0;
+
+    plt_uart_send(&rx_byte);   /* эхо */
+
+    if (rx_byte == 'r')
+    {
+        read_adc();
+        plt_uart_send("Waiting command: ");
     }
+    else if (rx_byte == 's')
+    {
+        uint32_t adc_val = read_adc();
+        uint32_t uptime  = HAL_GetTick();
+
+        plt_uart_print("--- System Status ---\r\n");
+        plt_uart_print("Uptime : %lu ms\r\n", uptime);
+        plt_uart_print("ADC    : %lu  (%lu mV)\r\n",
+                       adc_val, (adc_val * 3300) / 4095);
+        plt_uart_print("---------------------\r\nWaiting command: ");
+    }
+    else
+    {
+        if (rx_byte != '\r' && rx_byte != '\n')
+        {
+            plt_uart_send("\r\n[ERROR] Unknown command. Use r or s\r\nWaiting command: ");
+        }
+    }
+
+    HAL_UART_Receive_IT(&huart1, (uint8_t*)&rx_byte, 1);
 }
 
 void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
 {
-    if (huart->Instance == USART1) {
-        uart_rx_flag = 1;
-    }
-}
-
-
-uint32_t USART_GetCommandCount(void)
-{
-    return command_counter;
+    if (huart->Instance != USART1) return;
+    uart_rx_flag = 1;
 }
