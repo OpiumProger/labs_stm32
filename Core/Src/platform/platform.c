@@ -5,24 +5,43 @@
 //#include "lab2_timer/lab2_timer.h"
 //#include "lab3_stepper/lab3_stepper.h"
 #include "lab4_adc/lab4_adc.h"
+#include "platform_def.h"
 extern UART_HandleTypeDef huart1;
+
 /* Однократный вызов */
 int plt_init(void)
 {
-
-	return 0;
+    return 0;
 }
 
+int direction = 1;
+int step_counter = 0;
+int steps_per_rotation = 8;
 
 /* Повторяющийся вызов */
 void plt_process(void)
 {
-	/* Устанавливаем задержку */
-	plt_delay(500);
-}
+    uint32_t adc_value;
+    float voltage;
 
-/* Перенести в main.c в user code */
-//void plt_delay(uint32_t delay_ms)
-//{
-//	HAL_Delay(delay_ms);
-//}
+    plt_adc_start();
+
+    if (plt_adc_conversion_poll() == PLT_OK)
+    {
+        adc_value = plt_adc_get_value();
+        voltage = plt_adc_get_voltage();
+
+        if (adc_value > 3000)
+        {
+            HAL_GPIO_WritePin(GPIOA, GPIO_PIN_5, GPIO_PIN_SET);
+        }
+        else
+        {
+            HAL_GPIO_WritePin(GPIOA, GPIO_PIN_5, GPIO_PIN_RESET);
+        }
+    }
+
+    plt_adc_stop();
+
+    HAL_Delay(100);
+}
