@@ -5,12 +5,11 @@
 #include <stdio.h>
 
 extern UART_HandleTypeDef huart1;
-extern ADC_HandleTypeDef  hadc1;
 
 static char tx_buf[256];
-static char rx_byte  = 0;
-volatile int uart_rx_flag = 0;
+static char rx_byte = 0;
 
+<<<<<<< HEAD
 void plt_uart_init(void)
 {
     plt_uart_send("\r\n=== ADC MONITOR ===\r\n");
@@ -23,11 +22,31 @@ void plt_uart_init(void)
 }
 
 
+=======
+volatile int uart_rx_flag = 0;
+/* init UART и стартового меню */
+void plt_uart_init(void)
+{
+    plt_uart_send("\r\n=== LED CONTROL ===\r\n");
+    plt_uart_send("Enter 1 -> LED ON\r\n");
+    plt_uart_send("Enter 0 -> LED OFF\r\n");
+    plt_uart_send("==================\r\n");
+    plt_uart_send("Waiting input: ");
+
+    HAL_UART_Receive_IT(&huart1, (uint8_t*)&rx_byte, 1); /* перезапуск приема след байта*/
+}
+
+/* send строки по UART */
+>>>>>>> 5941d2524303cce44cec3d3fcd9f676acd43e7f4
 void plt_uart_send(const char *data)
 {
     HAL_UART_Transmit(&huart1, (uint8_t*)data, strlen(data), HAL_MAX_DELAY);
 }
 
+<<<<<<< HEAD
+=======
+/* отформатированный вывод */
+>>>>>>> 5941d2524303cce44cec3d3fcd9f676acd43e7f4
 void plt_uart_print(const char *format, ...)
 {
     va_list args;
@@ -37,22 +56,31 @@ void plt_uart_print(const char *format, ...)
     plt_uart_send(tx_buf);
 }
 
+<<<<<<< HEAD
 
+=======
+>>>>>>> 5941d2524303cce44cec3d3fcd9f676acd43e7f4
 int plt_uart_is_available(void)
 {
-    return uart_rx_flag;
+	return uart_rx_flag;
 }
 
+<<<<<<< HEAD
 static uint32_t read_adc(void)
 {
     static int step_n = 0;
     step_n++;
+=======
+void plt_uart_proccess(void)
+{
+	if(plt_uart_is_available())
+	{
+		uart_rx_flag = 0;
+>>>>>>> 5941d2524303cce44cec3d3fcd9f676acd43e7f4
 
-    HAL_ADC_Start(&hadc1);
-    HAL_ADC_PollForConversion(&hadc1, HAL_MAX_DELAY);
-    uint32_t val = HAL_ADC_GetValue(&hadc1);
-    HAL_ADC_Stop(&hadc1);
+	    plt_uart_send(&rx_byte); /* отправка нажатого символа обратно */
 
+<<<<<<< HEAD
     plt_uart_print("\r\n[ADC] Read #%d  raw=%lu  voltage=%lu mV\r\n",
                    step_n, val, (val * 3300) / 4095);
     return val;
@@ -90,10 +118,34 @@ void plt_uart_process(void)
         }
     }
     HAL_UART_Receive_IT(&huart1, (uint8_t*)&rx_byte, 1);
+=======
+	    if (rx_byte == '1') /* если 1, то вкл */
+	    {
+	        HAL_GPIO_WritePin(USER_LED_GPIO_Port, USER_LED_Pin, GPIO_PIN_SET);
+	        plt_uart_send("\r\n[OK] LED ON\r\nWaiting input: ");
+	    }
+	    else if (rx_byte == '0') /* если 0, то выкл */
+	    {
+	        HAL_GPIO_WritePin(USER_LED_GPIO_Port, USER_LED_Pin, GPIO_PIN_RESET);
+	        plt_uart_send("\r\n[OK] LED OFF\r\nWaiting input: ");
+	    }
+	    else
+	    {
+	        if (rx_byte != '\r' && rx_byte != '\n')
+	        {
+	            plt_uart_send("\r\n[ERROR] Use 1 or 0 only\r\nWaiting input: ");
+	        }
+	    }
+
+	    HAL_UART_Receive_IT(&huart1, (uint8_t*)&rx_byte, 1);
+	}
+>>>>>>> 5941d2524303cce44cec3d3fcd9f676acd43e7f4
 }
 
+/* колбэк при получении байта */
 void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
 {
     if (huart->Instance != USART1) return;
+
     uart_rx_flag = 1;
 }
