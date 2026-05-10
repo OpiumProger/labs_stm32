@@ -7,12 +7,10 @@
 extern UART_HandleTypeDef huart1;
 extern ADC_HandleTypeDef  hadc1;
 
-/* Случай №2: глобальные static — видны только в этом файле */
 static char tx_buf[256];
 static char rx_byte  = 0;
 volatile int uart_rx_flag = 0;
 
-/* ── Инициализация ──────────────────────────────────────────── */
 void plt_uart_init(void)
 {
     plt_uart_send("\r\n=== ADC MONITOR ===\r\n");
@@ -21,17 +19,15 @@ void plt_uart_init(void)
     plt_uart_send("  s -> System status\r\n");
     plt_uart_send("===================\r\n");
     plt_uart_send("Waiting command: ");
-
     HAL_UART_Receive_IT(&huart1, (uint8_t*)&rx_byte, 1);
 }
 
-/* ── Отправка строки ────────────────────────────────────────── */
+
 void plt_uart_send(const char *data)
 {
     HAL_UART_Transmit(&huart1, (uint8_t*)data, strlen(data), HAL_MAX_DELAY);
 }
 
-/* ── Форматированный вывод ──────────────────────────────────── */
 void plt_uart_print(const char *format, ...)
 {
     va_list args;
@@ -41,16 +37,14 @@ void plt_uart_print(const char *format, ...)
     plt_uart_send(tx_buf);
 }
 
-/* ── Флаг приёма ────────────────────────────────────────────── */
+
 int plt_uart_is_available(void)
 {
     return uart_rx_flag;
 }
 
-/* ── Считать АЦП ────────────────────────────────────────────── */
 static uint32_t read_adc(void)
 {
-    /* Случай №1: локальная static — счётчик сохраняется между вызовами */
     static int step_n = 0;
     step_n++;
 
@@ -64,7 +58,6 @@ static uint32_t read_adc(void)
     return val;
 }
 
-/* ── Обработка команды ──────────────────────────────────────── */
 void plt_uart_process(void)
 {
     if (!plt_uart_is_available()) return;
@@ -96,7 +89,6 @@ void plt_uart_process(void)
             plt_uart_send("\r\n[ERROR] Unknown command. Use r or s\r\nWaiting command: ");
         }
     }
-
     HAL_UART_Receive_IT(&huart1, (uint8_t*)&rx_byte, 1);
 }
 
