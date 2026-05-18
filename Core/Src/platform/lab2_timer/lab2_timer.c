@@ -19,6 +19,7 @@ extern TIM_HandleTypeDef htim6;
 
 void plt_timer_set(uint32_t period)
 {
+	HTIM.Instance->PSC = 16999;
 	HTIM.Instance->ARR = period;
 }
 

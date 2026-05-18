@@ -46,6 +46,7 @@ uint32_t plt_adc_get_value(void)
  * Функция возвращает напряжение в вольтах*/
 float plt_adc_get_voltage(void)
 {
-    float voltage = 0.00;
+    uint32_t adc_value = plt_adc_get_value();
+    float voltage = (adc_value * Vref) / 4095.0f;
     return voltage;
 }
