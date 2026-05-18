@@ -11,12 +11,10 @@ extern UART_HandleTypeDef huart1;
 /* Однократный вызов */
 int plt_init(void)
 {
+    plt_uart_init();
+
     return 0;
 }
-
-int direction = 1;
-int step_counter = 0;
-int steps_per_rotation = 8;
 
 /* Повторяющийся вызов */
 void plt_process(void)
@@ -42,6 +40,5 @@ void plt_process(void)
     }
 
     plt_adc_stop();
-
     HAL_Delay(100);
 }
